@@ -1,0 +1,10 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: quarkus-demo-native 
+  namespace: knative-quarkus-demo 
+spec:
+  template:
+    spec:
+      containers:
+        - image: image-registry.openshift-image-registry.svc:5000/knative-quarkus-demo/quarkus-demo-native@sha256:7794c63d0593f435486c9250b18ed6524744bb16668af0ddbd62f30b2c7f775a
