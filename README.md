@@ -28,3 +28,6 @@ Or, if you don't have GraalVM installed, you can run the native executable build
 You can then execute your native executable with: `./target/quarkus-demo-1.0.0-SNAPSHOT-runner`
 
 If you want to learn more about building native executables, please consult https://quarkus.io/guides/building-native-image.
+
+## Run this Quarkus application on Red Hat CodeReady Workspaces
+[![Start Coding & Contribute](factory-contribute.svg)](https://codeready-codeready-workspaces.apps.cluster-toronto-5c0f.toronto-5c0f.example.opentlc.com/factory?url=https://github.com/nmalvankar/quarkus-demo.git)
