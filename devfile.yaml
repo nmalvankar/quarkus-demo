@@ -1,0 +1,127 @@
+metadata:
+  name: quarkus-demo
+projects:
+  - name: quarkus-quickstarts
+    source:
+      location: 'https://github.com/nmalvankar/quarkus-demo.git'
+      type: git
+      branch: master
+components:
+  - id: redhat/quarkus-java11/latest
+    type: chePlugin
+  - mountSources: true
+    endpoints:
+      - name: quarkus-development-server
+        port: 8080
+      - name: hello-greeting-endpoint
+        port: 8080
+        attributes:
+          path: /hello/greeting/che-user
+    memoryLimit: 512Mi
+    type: dockerimage
+    volumes:
+      - name: m2
+        containerPath: /home/jboss/.m2
+    alias: maven
+    image: >-
+      registry.redhat.io/codeready-workspaces/plugin-java11-rhel8@sha256:38e363ba28941e6ef688d511c388324d0f83f7a1fac3eb65e09aa50858f0ae84
+    env:
+      - value: >-
+          -XX:MaxRAMPercentage=50.0 -XX:+UseParallelGC -XX:MinHeapFreeRatio=10
+          -XX:MaxHeapFreeRatio=20 -XX:GCTimeRatio=4
+          -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true
+          -Xms20m -Djava.security.egd=file:/dev/./urandom
+          -Duser.home=/home/jboss
+        name: JAVA_OPTS
+      - value: $(JAVA_OPTS)
+        name: MAVEN_OPTS
+  - id: sonarsource/sonarlint-vscode/latest
+    type: chePlugin
+  - id: redhat/vscode-openshift-connector/latest
+    type: chePlugin
+    alias: vscode-openshift
+apiVersion: 1.0.0
+commands:
+  - name: Package the application
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/quarkus-demo'
+        type: exec
+        command: mvn package
+        component: maven
+  - name: Start Quarkus in devmode (hot deploy + debug)
+    actions:
+      - workdir: '${CHE_PROJECTS_ROOT}/quarkus-demo'
+        type: exec
+        command: 'mvn compile quarkus:dev'
+        component: maven
+  - name: Attach remote debugger
+    actions:
+      - referenceContent: |
+          {
+            "version": "0.2.0",
+            "configurations": [
+              {
+                "type": "java",
+                "request": "attach",
+                "name": "Attach to Remote Quarkus App",
+                "hostName": "localhost",
+                "port": 5005
+              }
+            ]
+          }
+        type: vscode-launch
+  - name: oc login
+    actions:
+      - type: exec
+        command: |-
+                  rm oc; curl https://mirror.openshift.com/pub/openshift-v4/clients/oc/latest/linux/oc.tar.gz -s | tar zxv && ./oc login --server=${KUBERNETES_SERVICE_HOST}:443
+        component: vscode-openshift
+        workdir: /tmp
+  - name: oc - redeploy quarkus-app (from local sources)
+    actions:
+      - type: exec
+        command: |-
+                  oc start-build quarkus-demo --from-dir=/projects/quarkus-demo/
+                  oc logs -f bc/quarkus-demo
+        component: vscode-openshift
+        workdir: /projects/quarkus-demo/
+  - name: oc - deploy Quarkus app from github
+    actions:
+      - type: exec
+        command: |-
+                  # s2i quarkus app from source
+                  oc new-app java~https://github.com/nmalvankar/quarkus-demo.git --name=quarkus-demo --env=JAVA_OPTIONS="-Dquarkus.http.host=0.0.0.0"
+                  oc expose svc/quarkus-demo
+                  # check logs
+                  oc logs -f bc/quarkus-demo
+                  echo quarkus-demo url http://$(oc get route quarkus-demo --template='{{ .spec.host }}')
+        component: vscode-openshift
+        workdir: /projects/quarkus-demo/
+  - name: oc - deploy Quarkus native app from github
+    actions:
+      - type: exec
+        command: |-
+                  # s2i quarkus app from source
+                  oc new-app quay.io/quarkus/ubi-quarkus-native-s2i:19.3.1-java11~https://github.com/nmalvankar/quarkus-demo.git --name=quarkus-demo-native
+                  oc expose svc/quarkus-demo-native
+                  # check logs
+                  oc logs -f bc/quarkus-demo-native
+                  echo quarkus-demo-native url http://$(oc get route quarkus-demo-native --template='{{ .spec.host }}')
+        component: vscode-openshift
+        workdir: /projects/quarkus-demo/
+  - name: oc - delete quarkus app
+    actions:
+      - type: exec
+        command: |-
+                  oc delete all --selector=app=quarkus-demo
+                  oc get all --selector=app=quarkus-demo
+        component: vscode-openshift
+        workdir: /projects/quarkus-demo/
+  - name: oc - delete quarkus native app
+    actions:
+      - type: exec
+        command: |-
+                  oc delete all --selector=app=quarkus-demo-native
+                  oc get all --selector=app=quarkus-demo-native
+        component: vscode-openshift
+        workdir: /projects/quarkus-demo/
