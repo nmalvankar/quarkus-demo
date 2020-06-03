@@ -1,7 +1,7 @@
 metadata:
   name: quarkus-demo
 projects:
-  - name: quarkus-quickstarts
+  - name: quarkus-demo
     source:
       location: 'https://github.com/nmalvankar/quarkus-demo.git'
       type: git
