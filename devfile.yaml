@@ -1,5 +1,5 @@
 metadata:
-  name: quarkus-demo
+  name: quarkus-bmo-demo
 projects:
   - name: quarkus-demo
     source:
