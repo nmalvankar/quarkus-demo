@@ -9,7 +9,7 @@ import javax.ws.rs.core.Response;
 @Path("/hello")
 public class ExampleResource {
 
-    private String[] frameworks = {"quarkus", "spring-boot", "eap", "thorntail"};
+    private String[] runtimes = {"quarkus", "spring-boot", "eap", "thorntail"};
 
     @GET
     @Produces(MediaType.TEXT_PLAIN)
@@ -17,10 +17,10 @@ public class ExampleResource {
         return "hello world";
     }
 
-    @Path("/languages")
+    @Path("/runtimes")
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response languages() {
-        return Response.ok().entity(frameworks).build();
+        return Response.ok().entity(runtimes).build();
     }
 }
